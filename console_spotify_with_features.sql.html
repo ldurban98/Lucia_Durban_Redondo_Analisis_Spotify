@@ -1,0 +1,69 @@
+<html>
+<head>
+<title>console.sql</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #8c8c8c; font-style: italic;}
+.s1 { color: #080808;}
+.s2 { color: #0033b3;}
+.s3 { color: #067d17;}
+.s4 { color: #1750eb;}
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+console.sql</font>
+</center></td></tr></table>
+<pre><span class="s0">-- Creamos index para evitar que se recorran todas las líneas de la base de datos y agilizar el proceso</span>
+<span class="s2">CREATE INDEX IF NOT EXISTS </span><span class="s1">idx_audio_track_id</span>
+<span class="s2">ON </span><span class="s1">track_audio_features(track_id);</span>
+
+<span class="s2">CREATE INDEX IF NOT EXISTS </span><span class="s1">idx_spotify_top_track_id</span>
+<span class="s2">ON </span><span class="s1">spotify_recleaned(track_id);</span>
+
+<span class="s2">SELECT</span>
+    <span class="s1">spotify.track_id,</span>
+    <span class="s1">spotify.track_name,</span>
+    <span class="s0">-- Extrae y concatena los nombres de los artistas de la pista en un solo string, separados por comas</span>
+    <span class="s1">(</span>
+        <span class="s2">SELECT </span><span class="s1">group_concat(json_extract(value, </span><span class="s3">'$.name'</span><span class="s1">), </span><span class="s3">', '</span><span class="s1">)</span>
+        <span class="s2">FROM </span><span class="s1">json_each(spotify.artist_names)</span>
+    <span class="s1">) </span><span class="s2">AS </span><span class="s1">artist_names,</span>
+    <span class="s0">-- Extrae y concatena los IDs de los artistas asociados a la pista en un solo string, separados por comas</span>
+    <span class="s1">(</span>
+        <span class="s2">SELECT </span><span class="s1">group_concat(json_extract(value, </span><span class="s3">'$.id'</span><span class="s1">), </span><span class="s3">', '</span><span class="s1">)</span>
+        <span class="s2">FROM </span><span class="s1">json_each(spotify.artist_names)</span>
+    <span class="s1">) </span><span class="s2">AS </span><span class="s1">artist_id,</span>
+    <span class="s1">spotify.isrc,</span>
+    <span class="s1">spotify.popularity,</span>
+    <span class="s1">spotify.explicit,</span>
+    <span class="s1">spotify.album_name,</span>
+    <span class="s1">spotify.album_type,</span>
+    <span class="s1">features.key,</span>
+    <span class="s1">features.mode,</span>
+    <span class="s2">REPLACE</span><span class="s1">(CAST(features.danceability </span><span class="s2">AS TEXT</span><span class="s1">), </span><span class="s3">'.'</span><span class="s1">, </span><span class="s3">','</span><span class="s1">) </span><span class="s2">AS </span><span class="s1">danceability,</span>
+    <span class="s2">REPLACE</span><span class="s1">(CAST(features.loudness </span><span class="s2">AS TEXT</span><span class="s1">), </span><span class="s3">'.'</span><span class="s1">, </span><span class="s3">','</span><span class="s1">) </span><span class="s2">AS </span><span class="s1">loudness,</span>
+    <span class="s2">REPLACE</span><span class="s1">(CAST(features.speechiness </span><span class="s2">AS TEXT</span><span class="s1">), </span><span class="s3">'.'</span><span class="s1">, </span><span class="s3">','</span><span class="s1">) </span><span class="s2">AS </span><span class="s1">speechiness,</span>
+    <span class="s2">REPLACE</span><span class="s1">(CAST(features.acousticness </span><span class="s2">AS TEXT</span><span class="s1">), </span><span class="s3">'.'</span><span class="s1">, </span><span class="s3">','</span><span class="s1">) </span><span class="s2">AS </span><span class="s1">acousticness,</span>
+    <span class="s2">REPLACE</span><span class="s1">(CAST(features.energy </span><span class="s2">AS TEXT</span><span class="s1">), </span><span class="s3">'.'</span><span class="s1">, </span><span class="s3">','</span><span class="s1">) </span><span class="s2">AS </span><span class="s1">energy,</span>
+    <span class="s2">REPLACE</span><span class="s1">(CAST(features.valence </span><span class="s2">AS TEXT</span><span class="s1">), </span><span class="s3">'.'</span><span class="s1">, </span><span class="s3">','</span><span class="s1">) </span><span class="s2">AS </span><span class="s1">valence,</span>
+    <span class="s2">REPLACE</span><span class="s1">(CAST(features.tempo </span><span class="s2">AS TEXT</span><span class="s1">), </span><span class="s3">'.'</span><span class="s1">, </span><span class="s3">','</span><span class="s1">) </span><span class="s2">AS </span><span class="s1">tempo,</span>
+    <span class="s2">REPLACE</span><span class="s1">(CAST(features.instrumentalness </span><span class="s2">AS TEXT</span><span class="s1">), </span><span class="s3">'.'</span><span class="s1">, </span><span class="s3">','</span><span class="s1">) </span><span class="s2">AS </span><span class="s1">instrumentalness,</span>
+    <span class="s2">REPLACE</span><span class="s1">(CAST(features.liveness </span><span class="s2">AS TEXT</span><span class="s1">), </span><span class="s3">'.'</span><span class="s1">, </span><span class="s3">','</span><span class="s1">) </span><span class="s2">AS </span><span class="s1">liveness</span>
+<span class="s0">-- Renombramos la tabla de spotify_recleaned como spotify</span>
+<span class="s2">FROM </span><span class="s1">spotify_recleaned spotify</span>
+<span class="s0">-- Unimos con la tabla track_audio_features y renombramos la tabla de track_audio_features como features</span>
+<span class="s2">JOIN </span><span class="s1">track_audio_features features</span>
+    <span class="s2">ON </span><span class="s1">spotify.track_id = features.track_id</span>
+<span class="s0">-- Solo incluimos pistas con valor de &quot;danceability&quot; y &quot;energy&quot; conocido</span>
+<span class="s2">WHERE</span>
+    <span class="s1">features.danceability </span><span class="s2">IS NOT NULL</span>
+    <span class="s2">AND </span><span class="s1">features.energy </span><span class="s2">IS NOT NULL</span>
+<span class="s0">-- Ordenamos el resultado por popularidad (los más populares primero)</span>
+<span class="s2">ORDER BY </span><span class="s1">spotify.popularity </span><span class="s2">DESC</span>
+<span class="s0">-- Limitamos el resultado a un máximo de 11,000 filas</span>
+<span class="s2">LIMIT </span><span class="s4">100000</span><span class="s1">;</span></pre>
+</body>
+</html>
